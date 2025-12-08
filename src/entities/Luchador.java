@@ -1,94 +1,71 @@
 package entities;
 
-import combat.Ataque;
 import utils.Constants;
-import utils.Constants.Controls;
-import utils.Constants.State;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Luchador extends Personaje {
+public class Luchador {
+    private String name;
+    private int maxHealth, currentHealth;
+    private int x, y;
+    private Color colorPersonaje;
+    private List<Constants.AttackData> attacks;
 
-    private Controls controls;
-    private Ataque currentAttack;
-    private Color bodyColor;
-
-    public Luchador(float x, float y, Controls controls, Color color) {
-        super(x, y, 50, 100); // Tamaño del luchador 50x100
-        this.controls = controls;
-        this.bodyColor = color;
-        this.currentAttack = new Ataque();
-    }
-
-    @Override
-    public void update() {
-        super.update();
-        updateCombat();
-    }
-
-    private void updateCombat() {
-        // Si está atacando, actualizamos la lógica del ataque
-        if (state == State.ATTACKING) {
-            currentAttack.update(x, y, direction);
-            if (!currentAttack.isAttacking()) {
-                state = State.IDLE; // Volver a IDLE cuando termina el ataque
-            }
-        }
-    }
-
-    // Sistema de input para este luchador específico
-    public void processInput(boolean up, boolean down, boolean left, boolean right, boolean atkH, boolean atkL, boolean atkS) {
-        if (state == State.DEAD || state == State.HIT) return;
-
-        // Prioridad al ataque. Si ataca, no se mueve.
-        if (state != State.ATTACKING) {
-            if (left) move(-Constants.WALK_SPEED);
-            if (right) move(Constants.WALK_SPEED);
-            if (up) jump();
-            if (!left && !right && !inAir) state = State.IDLE;
-
-            // Trigger de ataques
-            if (atkH) performAttack(Constants.ATK_HIGH);
-            else if (atkL) performAttack(Constants.ATK_LOW);
-            else if (atkS) performAttack(Constants.ATK_SPECIAL);
-        }
-    }
-
-    private void performAttack(Constants.AttackData data) {
-        state = State.ATTACKING;
-        currentAttack.startAttack(data);
-    }
-
-    // --- RENDERIZADO (Matriz Gráfica Básica) ---
-    @Override
-    public void render(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g;
-
-        // 1. Dibujar cuerpo (Hurtbox)
-        g2.setColor(bodyColor);
-        if(state == State.HIT) g2.setColor(Color.WHITE); // Flash blanco al ser golpeado
-        g2.fill(hitbox);
-
-        // 2. Dibujar indicador de dirección (ojo)
-        g2.setColor(Color.GREEN);
-        int eyeX = (direction == 1) ? (int)(x + width - 10) : (int)x;
-        g2.fillRect(eyeX, (int)y + 10, 10, 10);
-
-        // 3. Dibujar Hitbox de ataque activo (Si existe)
-        if (currentAttack.isActiveFrame()) {
-            g2.setColor(Color.YELLOW);
-            g2.fill(currentAttack.getHitbox());
-        }
+    public Luchador(String name, int maxHealth, int x, int y, Color color) {
+        this.name = name;
+        this.maxHealth = maxHealth;
+        this.currentHealth = maxHealth;
+        this.x = x;
+        this.y = y;
+        this.colorPersonaje = color;
+        this.attacks = new ArrayList<>();
         
-        // 4. Barra de vida simple encima
-        g2.setColor(Color.RED);
-        g2.fillRect((int)x, (int)y - 20, 50, 5);
-        g2.setColor(Color.GREEN);
-        g2.fillRect((int)x, (int)y - 20, (int)(50 * ((float)currentHealth/maxHealth)), 5);
+        // Cargar ataques
+        attacks.add(new Constants.AttackData("Golpe Alto", 15, Color.YELLOW));
+        attacks.add(new Constants.AttackData("Golpe Bajo", 10, Color.ORANGE));
+        attacks.add(new Constants.AttackData("Especial", 30, Color.MAGENTA));
     }
 
-    public Controls getControls() { return controls; }
-    @Override
-    public Ataque getCurrentAttack() { return currentAttack; }
+    public void takeDamage(int dmg) {
+        this.currentHealth -= dmg;
+        if (currentHealth < 0) currentHealth = 0;
+    }
+
+    public boolean isDead() { return currentHealth <= 0; }
+    public List<Constants.AttackData> getAttacks() { return attacks; }
+    public String getName() { return name; }
+
+    public void render(Graphics2D g2) {
+        // Cuerpo
+        g2.setColor(colorPersonaje);
+        g2.fillRoundRect(x, y, 90, 130, 15, 15);
+        
+        // Sombra
+        g2.setColor(new Color(0,0,0,50));
+        g2.fillOval(x, y+120, 90, 20);
+
+        // Barra de Vida
+        int barW = 120;
+        int barX = x - 15;
+        int barY = y - 30;
+        
+        g2.setColor(Color.DARK_GRAY);
+        g2.fillRect(barX, barY, barW, 10); // Fondo
+        
+        float hpPercent = (float)currentHealth / maxHealth;
+        if(hpPercent > 0.5) g2.setColor(Color.GREEN);
+        else if(hpPercent > 0.2) g2.setColor(Color.ORANGE);
+        else g2.setColor(Color.RED);
+        
+        g2.fillRect(barX, barY, (int)(barW * hpPercent), 10); // Vida
+        
+        g2.setColor(Color.BLACK);
+        g2.drawRect(barX, barY, barW, 10); // Borde
+        
+        // Texto Info
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, 12));
+        g2.drawString(name + " (" + currentHealth + ")", barX, barY - 5);
+    }
 }
