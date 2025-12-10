@@ -9,7 +9,6 @@
 **Crypto Legends** es un videojuego de lucha 2D (Fighting Game) desarrollado en Java puro (Swing/AWT). Ambientado en un futuro Cyberpunk donde las transacciones definen el poder, el juego ofrece combates frenéticos 1v1 local, personajes con lore profundo, mecánicas de bloqueo, energía, proyectiles y ataques definitivos.
 
 ![Logo Preview](src/logo.png)
-*(Asegúrate de que tu imagen logo.png esté en la carpeta src para verla aquí)*
 
 ---
 
